@@ -1,0 +1,312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Jade Delight</title>
+<script
+	src="https://code.jquery.com/jquery-3.6.0.min.js"
+	integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+	crossorigin="anonymous"></script> <!--******* ADDED THIS CDN *********-->
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.min.js"></script> <!--******** ADDED THIS CDN *********-->
+
+<!--******* ADDED INTERNAL CSS BELOW *********-->
+<style> 
+	* {
+		font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+		color: #10421c;
+	}
+	html, body, table {
+		background-color: #c1eccb;
+	}
+	#submit:hover {
+		background-color: #10421c;
+		color: #c1eccb;
+	}
+    input.error, textarea.error {
+    font-weight: 300;
+    color: red;
+    }
+    label.error {
+    color: red;
+    font-size: 1rem;
+    display: block;
+    margin-top: 5px;
+
+    }   
+</style>
+<!--***** ADDED INTERNAL CSS ABOVE ******-->
+</head>
+
+<body>
+<script language="javascript">
+
+function MenuItem(name, cost)
+{
+	this.name = name;
+	this.cost=cost;
+}
+
+menuItems = new Array(
+	new MenuItem("Chicken Chop Suey", 4.5),
+	new MenuItem("Sweet and Sour Pork", 6.25),
+	new MenuItem("Shrimp Lo Mein", 5.25),
+	new MenuItem("Moo Shi Chicken", 6.5),
+	new MenuItem("Fried Rice", 2.35)
+);
+
+function makeSelect(name, minRange, maxRange)
+{
+	var t= "";
+	t = "<select name='" + name + "' size='1'>";
+	for (j=minRange; j<=maxRange; j++)
+	   t += "<option>" + j + "</option>";
+	t+= "</select>"; 
+	return t;
+}
+</script>
+
+<h1>Jade Delight</h1>
+<form>
+
+<p>First Name: <input type="text"  name='fname' /></p>
+<p>Last Name*:  <input type="text"  name='lname' /></p>
+<p id = sName >Street*: <input type="text"  name='street' /></p> <!--********* ADDED ID HERE ********-->
+<p id = cName >City*: <input type="text"  name='city' /></p> <!--******** ADDED ID HERE **********-->
+<p>Phone*: <input type="text"  name='phone' /></p>
+<p> 
+	<input type="radio"  name="p_or_d" value = "pickup" checked="checked"/>Pickup  
+	<input type="radio"  name='p_or_d' value = 'delivery'/>
+	Delivery
+</p>
+<table border="0" cellpadding="3">
+  <tr>
+    <th>Select Item</th>
+    <th>Item Name</th>
+    <th>Cost Each</th>
+    <th>Total Cost</th>
+  </tr>
+<script language="javascript">
+
+  var s = "";
+  for (i=0; i< menuItems.length; i++)
+  {
+	  s += "<tr><td>";
+	  s += makeSelect("quan" + i, 0, 10);
+	  s += "</td><td>" + menuItems[i].name + "</td>";
+	  s += "<td> $ " + menuItems[i].cost.toFixed(2) + "</td>";
+	  s += "<td>$<input type='text' name='cost'/></td></tr>";
+  }
+  document.writeln(s);
+
+//****************************************************** BELOW HERE IS WHAT I WROTE ***************************************************
+
+    // Add US Phone Validation
+	jQuery.validator.addMethod('phoneUS', function(phone_number, element) {
+    		phone_number = phone_number.replace(/\s+/g, ''); 
+    		return this.optional(element) || phone_number.length > 9 &&
+        		phone_number.match(/^(1-?)?(\([2-9]\d{2}\)|[2-9]\d{2})-?[2-9]\d{2}-?\d{4}$/);
+		}, 'Please enter a valid US phone number (xxxxxxxxxx or xxx-xxx-xxxx).');
+
+  $(document).ready(function() {
+
+	
+	  	//start out with Street and City hidden since the default radio button selected is Pickup
+		$("#sName").hide();
+        $("#cName").hide();
+       	$("input[name= 'street']").hide();
+        $("input[name= 'city']").hide();
+
+		$("input[value= pickup]").on('click', function()
+  		{
+  			$("#sName").hide();
+        	$("#cName").hide();
+       		$("input[name= 'street']").hide();
+        	$("input[name= 'city']").hide();
+  		})
+		$("input[value= delivery]").on('click', function(){
+			$("#sName").show();
+        	$("#cName").show();
+        	$("input[name= 'street']").show();
+        	$("input[name= 'city']").show();
+			$("input[name= 'street']").attr("required", true); //only required if it is a delivery
+			$("input[name= 'city']").attr("required", true); //only required if it is a delivery
+  		})
+		
+		//form validation
+		$("form").validate({
+            // Specify validation rules
+                rules: {    
+                    lname: {
+                          required: true
+                    },
+                    phone: {
+                        required: true,
+                        // Specify that phone should be validated
+                        // by the built-in "phoneUS" rule
+                        // accepts both of the inputs below (examples):
+                        // 949-101-2020
+                        // 9491012020
+                        phoneUS: true
+                    },
+					total : {
+						min: 0.01,
+					}
+
+                },
+                messages: {
+                    lname: "This field is required.",
+					total: "You need to order at least one item."
+                    //phone: " Please enter a valid phone US phone number (in the form xxx-xxx-xxxx or xxxxxxxxxx)",
+                },
+                submitHandler: function (form) { 
+					
+					timeTilReady();
+					finalAlert();
+                    return false; 
+                }
+		})
+
+		//setting values to $0.00 initially
+		newQuan(0);
+		newQuan(1);
+		newQuan(2);
+		newQuan(3);
+		newQuan(4);
+	
+
+		//calculating the dropdown values for each item when they change
+		$('select[name="quan0"]').change(function() {
+       		newQuan(0);
+			
+  		  });
+		$('select[name="quan1"]').change(function() {
+       		newQuan(1);
+  		});
+		$('select[name="quan2"]').change(function() {
+       		newQuan(2);
+  		});
+		$('select[name="quan3"]').change(function() {
+       		newQuan(3);
+			
+  		});
+		$('select[name="quan4"]').change(function() {
+       		newQuan(4);
+		
+  		});
+
+		
+		  
+		
+	})
+
+	var numCS, numSSP, numSLM, numMSC, numFR, costCS, costSSP, costSLM, costMSC, costFR, sub;
+	costs = [];
+	//called when number selected changes
+	function newQuan(x) {
+
+			//getting the current selector value
+			numCS = document.forms[0].quan0.selectedIndex;		
+			numSSP = document.forms[0].quan1.selectedIndex;
+			numSLM = document.forms[0].quan2.selectedIndex;
+			numMSC = document.forms[0].quan3.selectedIndex;
+			numFR = document.forms[0].quan4.selectedIndex;
+
+
+			costCS = numCS * menuItems[0].cost;
+			costSSP = numSSP * menuItems[1].cost;
+			costSLM = numSLM * menuItems[2].cost;
+			costMSC = numMSC * menuItems[3].cost;
+			costFR = numFR * menuItems[4].cost;
+
+			costs = [costCS, costSSP, costSLM, costMSC, costFR];
+			document.forms[0].cost[x].value = costs[x].toFixed(2);
+			subAndTotal();
+	}
+
+	//calculates subtotal and total
+	function subAndTotal(){
+		sub = costCS + costSSP + costSLM + costMSC + costFR;
+		if (sub != 0){
+			$("input[name= 'total']").removeAttr("min", 0.01);
+		}
+        document.forms[0].subtotal.value = sub.toFixed(2);
+        document.forms[0].tax.value = (sub * .0625).toFixed(2);
+        document.forms[0].total.value = (sub * 1.0625).toFixed(2);
+		if (document.forms[0].total.value != 0.00){
+			$("input[name= 'total']").removeAttr("min", 0.01);
+		} else {
+			$("input[name= 'total']").attr("min", 0.01);
+		}
+	}
+
+
+
+	var today, minReady;
+	//calculates the time until the order is ready
+	function timeTilReady() {
+		today = new Date();
+		if ($('input[name=pickup]').is(':checked')){
+			minReady = 15;
+		} else {
+			minReady = 30;
+		}
+		today.setMinutes(today.getMinutes() + minReady);
+	}
+
+	var printTotal, printLast, printFirst, printSubtotal, printTax;
+	var myWindow;
+	//the final printing of the order information to the new window
+	function finalAlert() {
+		printFirst = document.forms[0].fname.value;
+		printLast = document.forms[0].lname.value;
+		printSubtotal = document.forms[0].subtotal.value;
+		printTax = document.forms[0].tax.value;
+		printTotal = document.forms[0].total.value;
+		//creates new window
+		myWindow = window.open("", "Order", "");
+		if (printFirst == ""){
+			myWindow.document.write("<p >Thank you for your order Mx. " + printLast + "!<br><br>You ordered: <br>" 
+				+ numCS + " Chicken Chop Suey *** $" + costCS.toFixed(2) + "<br>"
+				+ numSSP + " Sweet and Sour Pork *** $" + costSSP.toFixed(2) + "<br>"
+				+ numSLM + " Shrimp Lo Mein *** $" + costSLM.toFixed(2) + "<br>"
+				+ numMSC + " Moo Shi Chicken *** $" + costMSC.toFixed(2) + "<br>"
+				+ numFR + " Fried Rice *** $" + costFR.toFixed(2) 
+				+ "<br><br>Your subtotal is: $" + printSubtotal
+        		+"<br>MASS tax is: $" + printTax
+				+ "<br><br>Your total is: $" + printTotal
+				+ "<br><br>Your order will be ready at: " + today.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) +"</p>");
+		} else {
+			myWindow.document.write("<p>Thank you for your order " + printFirst + " " + printLast + "!<br><br>You ordered: <br>" 
+			+ numCS + " Chicken Chop Suey *** $" + costCS.toFixed(2) + "<br>"
+				+ numSSP + " Sweet and Sour Pork *** $" + costSSP.toFixed(2) + "<br>"
+				+ numSLM + " Shrimp Lo Mein *** $" + costSLM.toFixed(2) + "<br>"
+				+ numMSC + " Moo Shi Chicken *** $" + costMSC.toFixed(2) + "<br>"
+				+ numFR + " Fried Rice *** $" + costFR.toFixed(2) 
+				+ "<br><br>Your subtotal is: $" + printSubtotal 
+        		+"<br>MASS tax is: $" + printTax
+				+ "<br><br>Your total is: $" + printTotal
+				+ "<br><br>Your order will be ready at: " + today.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })+"</p>");
+		}
+		
+	}
+//***************************************** ABOVE HERE IS WHAT I WROTE ************************************
+</script>
+</table>
+<p>Subtotal: 
+   $<input type="text"  name='subtotal' id="subtotal" />
+</p>
+<p>Mass tax 6.25%:
+  $ <input type="text"  name='tax' id="tax" />
+</p>
+<p>Total: $ <input type="text"  name='total' id="total" />
+</p>
+
+<input id = submit type = "submit" value = "Submit Order" />
+
+
+
+</form>
+</body>
+</html>
